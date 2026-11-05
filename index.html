@@ -1,0 +1,363 @@
+<!doctype html>
+<html lang="lv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sudraba noteikšana — vienkāršs aprēķinu rīks</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Literata:opsz,wght@7..72,600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#eef2f3; --surface:#ffffff; --surface-2:#f5f8f9; --ink:#15212b; --muted:#56646e; --line:#d3dde1;
+  --slate:#2b5466; --slate-soft:#e1ebef; --fescn:#8c2f1b; --fescn-soft:#f6e6e1;
+  --warn:#7d5200; --warn-bg:#fbf0d6; --err:#9b1c24; --err-bg:#fbe3e4; --ok:#1d6a3d; --ok-bg:#dff1e5;
+  --sim:#5a3a92; --sim-bg:#ece4f8; --grid:#e3eaed;
+  color-scheme:light; box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#11181d; --surface:#18222a; --surface-2:#1e2a33; --ink:#e4ecf0; --muted:#9aaab4; --line:#2e3d48;
+    --slate:#8fc0d6; --slate-soft:#1f3440; --fescn:#e58a6f; --fescn-soft:#3a221c;
+    --warn:#f0c46a; --warn-bg:#352a12; --err:#f1949a; --err-bg:#3b1a1d; --ok:#86d3a3; --ok-bg:#16301f;
+    --sim:#c7aef0; --sim-bg:#2b2240; --grid:#26343e; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#11181d; --surface:#18222a; --surface-2:#1e2a33; --ink:#e4ecf0; --muted:#9aaab4; --line:#2e3d48;
+  --slate:#8fc0d6; --slate-soft:#1f3440; --fescn:#e58a6f; --fescn-soft:#3a221c;
+  --warn:#f0c46a; --warn-bg:#352a12; --err:#f1949a; --err-bg:#3b1a1d; --ok:#86d3a3; --ok-bg:#16301f;
+  --sim:#c7aef0; --sim-bg:#2b2240; --grid:#26343e; color-scheme:dark;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;font-size:17px;line-height:1.55}
+.wrap{max-width:760px;margin:0 auto;padding:20px 16px 56px}
+h1,h2{font-family:"Literata",Georgia,"Times New Roman",serif;font-weight:600;line-height:1.25}
+h1{font-size:clamp(1.45rem,5vw,1.9rem);margin:6px 0 6px}
+.lede{color:var(--muted);margin:0 0 16px}
+section{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px;margin:16px 0}
+section>h2{font-size:1.2rem;margin:0 0 6px;display:flex;gap:12px;align-items:center}
+.n{flex:none;width:30px;height:30px;border-radius:50%;background:var(--slate);color:var(--surface);display:grid;place-items:center;font-family:"IBM Plex Sans",sans-serif;font-size:.95rem}
+.hint{color:var(--muted);margin:0 0 14px;font-size:.95rem}
+.f{margin:12px 0}
+.f label{display:block;font-weight:600;margin-bottom:4px}
+.f small{display:block;color:var(--muted);font-size:.85rem;margin-top:3px}
+.f input[type=text]{width:100%;max-width:320px;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface-2);color:var(--ink);font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace;font-size:17px}
+.f input.txt{font-family:"IBM Plex Sans",system-ui,sans-serif;max-width:100%}
+.unit{font-family:"IBM Plex Mono",monospace;color:var(--muted);margin-left:6px}
+.inline{display:flex;align-items:center}
+.choice{display:flex;flex-wrap:wrap;gap:8px}
+.choice label{display:flex;gap:8px;align-items:center;font-weight:400;border:1px solid var(--line);border-radius:8px;padding:9px 12px;background:var(--surface-2);cursor:pointer}
+input:focus-visible,button:focus-visible,summary:focus-visible,textarea:focus-visible{outline:3px solid var(--slate);outline-offset:2px}
+button{font:inherit;font-size:.95rem;font-weight:600;border-radius:8px;padding:9px 14px;border:1px solid var(--slate);background:var(--slate);color:var(--surface);cursor:pointer}
+button.ghost{background:transparent;color:var(--slate)}
+button.mini{padding:5px 10px;font-size:.88rem}
+.actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.rep{display:flex;gap:8px;align-items:center;margin:6px 0}
+.rep span{width:5.5rem;color:var(--muted)}
+.rep input{width:120px;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface-2);color:var(--ink);font-family:"IBM Plex Mono",monospace;font-size:17px}
+.m{padding:10px 12px;border-radius:8px;margin:8px 0;font-size:.95rem}
+.m.err{background:var(--err-bg);color:var(--err)} .m.warn{background:var(--warn-bg);color:var(--warn)} .m.info{background:var(--slate-soft);color:var(--slate)}
+.answer{border-left:6px solid var(--fescn);background:var(--fescn-soft);padding:14px 16px;border-radius:0 10px 10px 0;margin:8px 0 12px}
+.answer .big{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:clamp(1.5rem,7vw,2.2rem);color:var(--fescn);font-weight:500}
+.answer p{margin:6px 0 0}
+.sim-flag{display:none;background:var(--sim-bg);color:var(--sim);border-radius:8px;padding:10px 14px;margin:10px 0;font-weight:600}
+body.is-sim .sim-flag{display:block}
+ol.steps{padding-left:1.3rem;margin:8px 0}
+ol.steps li{margin:10px 0}
+.calc{display:block;font-family:"IBM Plex Mono",monospace;font-size:.92rem;background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin-top:4px;overflow-x:auto;white-space:nowrap}
+.src-row{display:grid;grid-template-columns:minmax(120px,1.2fr) auto minmax(80px,2fr);gap:10px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line)}
+.src-row .v{font-family:"IBM Plex Mono",monospace;text-align:right;white-space:nowrap}
+.src-row .miss{color:var(--warn);font-size:.9rem}
+.bar{height:12px;background:var(--fescn);border-radius:3px}
+.tbl{overflow-x:auto;margin:8px 0}
+table{border-collapse:collapse;width:100%;font-size:.88rem}
+th,td{padding:7px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{color:var(--muted);font-weight:600;white-space:nowrap}
+td.num{font-family:"IBM Plex Mono",monospace;text-align:right;white-space:nowrap}
+details{margin:12px 0 0}
+summary{cursor:pointer;font-weight:600;color:var(--slate)}
+.plot{width:100%;height:auto;display:block;background:var(--surface-2);border:1px solid var(--line);border-radius:8px}
+.plot .ax{stroke:var(--muted);stroke-width:1} .plot .gr{stroke:var(--grid);stroke-width:1}
+.plot .cv{stroke:var(--slate);stroke-width:2.4;fill:none} .plot .eq{stroke:var(--fescn);stroke-width:1.5;stroke-dasharray:6 4}
+.plot .dot{fill:var(--fescn)}
+.plot text{fill:var(--muted);font-family:"IBM Plex Sans",system-ui,sans-serif;font-size:13px} .plot text.lg{fill:var(--fescn);font-weight:600}
+.ok{color:var(--ok);font-weight:600} .no{color:var(--err);font-weight:600}
+textarea{width:100%;min-height:200px;font-family:"IBM Plex Mono",monospace;font-size:.85rem;padding:10px;border:1px solid var(--line);border-radius:8px;background:var(--surface-2);color:var(--ink)}
+.reaction{font-size:1.15rem;text-align:center;margin:10px 0;font-weight:600}
+footer{color:var(--muted);font-size:.85rem;margin-top:20px}
+@media (max-width:480px){section{padding:14px}.src-row{grid-template-columns:1fr auto}.src-row .barwrap{grid-column:1 / -1}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Cik sudraba ir sakausējumā?</h1>
+  <p class="lede">Tēma 5 — sudraba rodanidometrija. Ievadi savus mērījumus, un rīks pats izrēķinās rezultātu, tā precizitāti un uzzīmēs titrēšanas līkni.</p>
+  <div class="sim-flag" role="status">Uzmanību: šie ir simulēti (izdomāti) dati, nevis laboratorijas mērījumi.</div>
+
+  <section>
+    <h2><span class="n">1</span> Kā metode strādā</h2>
+    <p class="reaction">Ag⁺ + SCN⁻ → AgSCN↓</p>
+    <p>Katrs sudraba jons sasaistās ar vienu rodanīda jonu, tāpēc <b>cik molu KSCN iztērēts, tik molu sudraba bija kolbā</b>. Kad viss sudrabs ir nogulsnēts, nākamais KSCN piliens reaģē ar Fe³⁺ un šķīdums kļūst vāji brūngans — tas ir titrēšanas beigu signāls.</p>
+    <p class="hint" style="margin:0">Paraugs (40…60 mg) → izšķīdina HNO₃ → atšķaida līdz 25,0 mL → titrē 5,00 mL daļu (ja iztērēti < 3 mL, pievieno vēl 5,00 mL).</p>
+  </section>
+
+  <section>
+    <h2><span class="n">2</span> Ievadi mērījumus</h2>
+    <div class="f"><label for="m">Vielas masa (bez trauka)</label><div class="inline"><input type="text" id="m" inputmode="decimal" autocomplete="off" placeholder="piem. 0,0502"><span class="unit">g</span></div><small>Uzliek trauku, nospiež T (tarē), ieber vielu un nolasa — tā ir vielas masa</small></div>
+    <div class="f"><label for="c">KSCN koncentrācija</label><div class="inline"><input type="text" id="c" inputmode="decimal" autocomplete="off" placeholder="piem. 0,02000"><span class="unit">mol/L</span></div><small>Precīzā vērtība no pudeles etiķetes</small></div>
+    <div class="f"><label>Cik mL šķīduma titrēji vienā reizē?</label>
+      <div class="choice">
+        <label><input type="radio" name="va" value="5"> 5,00 mL</label>
+        <label><input type="radio" name="va" value="10"> 10,00 mL (2 × 5 mL)</label>
+        <label><input type="radio" name="va" value="10p"> 10,00 mL (10 mL pipete)</label>
+      </div></div>
+    <div class="f"><label>Iztērētais KSCN tilpums katrā titrēšanā</label>
+      <div id="reps"></div>
+      <button type="button" class="ghost mini" id="addRep">Pievienot vēl vienu titrēšanu</button></div>
+    <div class="f" style="margin-top:16px"><label style="font-weight:400;display:flex;gap:8px;align-items:center"><input type="checkbox" id="isSim"> Šie ir simulēti dati</label></div>
+    <div class="actions">
+      <button type="button" class="ghost" id="btnSim">Parādīt piemēru ar izdomātiem datiem</button>
+      <button type="button" class="ghost" id="btnClear">Notīrīt</button>
+    </div>
+
+    <details>
+      <summary>Svaru un mērtrauku precizitāte</summary>
+      <p class="hint" style="margin-top:8px">Neviens lauks nav obligāts. Jo vairāk aizpildīsi, jo precīzāka būs ± vērtība. Raksti to, kas uzrakstīts uz trauka vai sertifikātā.</p>
+      <div class="f"><label for="d">Svaru mazākais iedaļas solis</label><div class="inline"><input type="text" id="d" inputmode="decimal" autocomplete="off"><span class="unit">g</span></div><small>Precisa XT 220A: d = 0,0001 g</small></div>
+      <div class="f"><label for="a5">5 mL mērpipete ±</label><div class="inline"><input type="text" id="a5" inputmode="decimal" autocomplete="off"><span class="unit">mL</span></div><small>GOST 2. klase: ±0,02 mL</small></div>
+      <div class="f"><label for="a10">10 mL mērpipete ±</label><div class="inline"><input type="text" id="a10" inputmode="decimal" autocomplete="off"><span class="unit">mL</span></div><small>GOST 2. klase: ±0,04 mL — izmanto, ja titrē ar 10 mL pipeti</small></div>
+      <div class="f"><label for="abur">Birete ±</label><div class="inline"><input type="text" id="abur" inputmode="decimal" autocomplete="off"><span class="unit">mL</span></div><small>No uzraksta uz biretes (klase, GOST) vai sertifikāta</small></div>
+      <div class="f"><label for="avk">25 mL mērkolba ±</label><div class="inline"><input type="text" id="avk" inputmode="decimal" autocomplete="off"><span class="unit">mL</span></div><small>Kolba, kurā parauga šķīdumu atkšaida līdz atzīmei</small></div>
+    </details>
+  </section>
+
+  <section>
+    <h2><span class="n">3</span> Rezultāts</h2>
+    <div id="msgs"></div>
+    <div id="answer"></div>
+    <div id="steps"></div>
+  </section>
+
+  <section>
+    <h2><span class="n">4</span> Cik precīzs ir rezultāts?</h2>
+    <p class="hint">Katram mērījumam ir neliela kļūda. Šeit redzams, cik katrs avots „nobīda” rezultātu un kurš ietekmē visvairāk.</p>
+    <div id="budget"></div>
+  </section>
+
+  <section>
+    <h2><span class="n">5</span> Titrēšanas līkne</h2>
+    <p class="hint">Teorētisks modelis, nevis mērījums: kā mainās sudraba jonu daudzums (pAg), pievienojot KSCN. Straujais lēciens ir ekvivalences punkts.</p>
+    <div id="curve"></div>
+    <div id="curveTxt"></div>
+    <details>
+      <summary>Modeļa konstantes</summary>
+      <div class="f"><label for="ksp">AgSCN šķīdības reizinājums Ksp</label><input type="text" id="ksp" inputmode="decimal" autocomplete="off"><small>Literatūrā ~1·10⁻¹² (25 °C) — atskaitē norādi avotu</small></div>
+      <div class="f"><label for="kf">Fe(SCN)²⁺ veidošanās konstante K</label><input type="text" id="kf" inputmode="decimal" autocomplete="off"><small>Literatūrā ~10²–10³ — norādi avotu</small></div>
+      <div class="f"><label for="thr">Mazākā redzamā Fe(SCN)²⁺ koncentrācija</label><div class="inline"><input type="text" id="thr" inputmode="decimal" autocomplete="off"><span class="unit">mol/L</span></div><small>Bieži citēta ~6,4·10⁻⁶ — norādi avotu</small></div>
+      <p class="hint">Pieņemts: kolbā pievienots 1 mL alauna šķīduma (~0,5 mol/L Fe³⁺), aktivitātes koeficienti = 1.</p>
+    </details>
+  </section>
+
+  <section>
+    <h2><span class="n">6</span> Vai rīks rēķina pareizi?</h2>
+    <p class="hint">Rīks pats sevi pārbauda ar zināmiem skaitļiem. Pirmo piemēru pārrēķiniet arī ar kalkulatoru.</p>
+    <div id="tests"></div>
+  </section>
+
+  <section>
+    <h2><span class="n">7</span> Kopsavilkums atskaitei</h2>
+    <textarea id="summary" readonly aria-label="Kopsavilkums"></textarea>
+    <div class="actions"><button type="button" class="ghost" id="btnCopy">Kopēt</button><span id="copyMsg" style="color:var(--muted);align-self:center"></span></div>
+    <details>
+      <summary>Ko rīks pieņem</summary>
+      <ul>
+        <li>Viss sudrabs izšķīst un pilnībā nonāk mērkolbā.</li>
+        <li>Citi joni (piem., daudz vara sakausējumā) var traucēt — rīks to nelabo.</li>
+        <li>Trauku pielaides uzskata par vienmērīgi sadalītām (dala ar √3); rezultātu uzrāda ar k = 2 (~95 %).</li>
+        <li>Ja 10 mL ņemti ar to pašu 5 mL pipeti divreiz, pipetes kļūdu skaita divkārt.</li>
+        <li>Temperatūras ietekme uz tilpumiem nav ņemta vērā.</li>
+        <li>Nenoteiktībā iekļauj svarus, mērpipeti, bireti, mērkolbu un titrēšanu atkārtojamību — tikai tos, kuru precizitāte ievadīta. KSCN koncentrācijas kļūda nav iekļauta.</li>
+      </ul>
+    </details>
+  </section>
+
+  <footer>Ievadītie dati glabājas tikai šajā pārlūkā.</footer>
+</div>
+
+<script>
+(function(){
+"use strict";
+var M_AG=107.8682, VK=25.0, KEY="ag-rodan-vienk-v1";
+var FIELDS=["m","c","d","a5","a10","abur","avk","ksp","kf","thr"];
+var DEF={m:"",c:"",d:"0,0001",a5:"0,02",a10:"0,04",abur:"",avk:"",ksp:"1,0e-12",kf:"140",thr:"6,4e-6",va:"5",sim:false,reps:["","",""]};
+var SIM={m:"0,0502",c:"0,02000",va:"5",sim:true,reps:["3,25","3,28","3,24"]};
+var st={va:"5",sim:false,reps:["","",""]};
+
+function $(id){return document.getElementById(id);}
+function rd(v){ if(v==null) return null; var s=String(v).trim().replace(/\s/g,"").replace(",","."); if(s==="") return null; var x=Number(s); return isFinite(x)?x:NaN; }
+function fmt(x,dp){ return (x==null||!isFinite(x))?"—":x.toFixed(dp).replace(".",","); }
+var SUP={"-":"⁻","0":"⁰","1":"¹","2":"²","3":"³","4":"⁴","5":"⁵","6":"⁶","7":"⁷","8":"⁸","9":"⁹"};
+function sci(x,p){ p=p||3; if(x==null||!isFinite(x)) return "—"; if(x===0) return "0"; var a=Math.abs(x);
+  if(a>=0.001&&a<1e5) return fmt(x,Math.max(0,p-1-Math.floor(Math.log10(a))));
+  var q=x.toExponential(p-1).split("e"); return q[0].replace(".",",")+"·10"+q[1].replace("+","").split("").map(function(c){return SUP[c]||c;}).join(""); }
+function esc(s){ return String(s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c];}); }
+function mean(a){ return a.reduce(function(s,x){return s+x;},0)/a.length; }
+function sd(a){ var m=mean(a); return Math.sqrt(a.reduce(function(s,x){return s+(x-m)*(x-m);},0)/(a.length-1)); }
+
+/* ---- aprēķins ---- */
+function calc(I){
+  var msg=[], bad=false;
+  function err(t){msg.push({l:"err",t:t});bad=true;} function warn(t){msg.push({l:"warn",t:t});} function info(t){msg.push({l:"info",t:t});}
+  function need(k,name){ var x=rd(I[k]); if(x===null){err("Ievadi: "+name+".");return NaN;} if(isNaN(x)){err(name+": tas nav skaitlis.");return NaN;} if(x<=0){err(name+" jābūt lielākai par 0.");return NaN;} return x; }
+  function opt(k,name){ var x=rd(I[k]); if(x===null) return null; if(isNaN(x)||x<0){err(name+": jābūt pozitīvam skaitlim.");return null;} return x; }
+  var m=need("m","parauga masa"), c=need("c","KSCN koncentrācija");
+  var d=opt("d","svaru iedaļas solis"), a5=opt("a5","pipetes pielaide"), abur=opt("abur","biretes pielaide"), a10=opt("a10","10 mL pipetes pielaide"), avk=opt("avk","mērkolbas pielaide");
+  var Va=(I.va==="10"||I.va==="10p")?10:5, V=[], any=false;
+  (I.reps||[]).forEach(function(r,i){ var x=rd(r); if(x===null) return; any=true;
+    if(isNaN(x)){err((i+1)+". titrēšana: tas nav skaitlis.");return;} if(x<=0){err((i+1)+". titrēšana: tilpumam jābūt lielākam par 0.");return;} V.push(x); });
+  if(!any) err("Ievadi vismaz vienu titrēšanas tilpumu.");
+  if(bad) return {ok:false,msg:msg};
+
+  var f=VK/Va, w=V.map(function(v){return c*v/1000*M_AG*f/m*100;});
+  var n=w.length, wm=mean(w), s=n>1?sd(w):null, Vm=mean(V);
+  if(m<0.010) warn("Masa ir mazāka par svaru minimālo slodzi 0,01 g.");
+  else if(m<0.040||m>0.060) warn("Masa "+fmt(m*1000,1)+" mg nav protokola robežās 40…60 mg — pārbaudi, vai ievadīts gramos.");
+  if(Va===5&&V.some(function(v){return v<3;})) warn("Iztērēti mazāk par 3 mL. Pēc protokola jāpievieno vēl 5,00 mL un jāizvēlas „10,00 mL”.");
+  if(wm>100) err("Sanāk vairāk par 100 % sudraba — tas nav iespējams. Pārbaudi masu, koncentrāciju un titrēto tilpumu.");
+  if(n<2) warn("Ir tikai viena titrēšana — nevar novērtēt, cik labi rezultāti atkārtojas.");
+  else if(s/wm>0.02) warn("Titrēšanas rezultāti atšķiras vairāk par 2 % — vērts pārbaudīt.");
+
+  var r3=Math.sqrt(3), B=[];
+  var uBal=d!==null?d/Math.sqrt(6):null;
+  B.push({q:"Svari",x:"m",val:fmt(m,4)+" g",u:uBal,ux:"g",rel:uBal!==null?uBal/m:null,dist:"taisnstūra",src:d!==null?"iedaļa "+sci(d,1)+" g (nulle + nolasījums: u = d/√6)":""});
+  B.push({q:"Birete",x:"V̄",val:fmt(Vm,3)+" mL",u:abur!==null?abur/r3:null,ux:"mL",rel:abur!==null?abur/r3/Vm:null,dist:"taisnstūra",src:abur!==null?"±"+sci(abur,2)+" mL":""});
+  B.push({q:"Mērkolba 25 mL",x:"V_k",val:"25,0 mL",u:avk!==null?avk/r3:null,ux:"mL",rel:avk!==null?avk/r3/VK:null,dist:"taisnstūra",src:avk!==null?"±"+sci(avk,2)+" mL":""});
+  B.push({q:"Titrēšanu atkārtojamība",x:"w",val:fmt(wm,2)+" %",u:n>1?s/Math.sqrt(n):null,ux:"%",rel:n>1?s/Math.sqrt(n)/wm:null,dist:"normālais",src:n>1?"s = "+sci(s,2)+" %, n = "+n:""});
+  var one=I.va==="10p", ap=one?a10:a5, ua=ap!==null?(Va===10&&!one?2:1)*ap/r3:null;
+  B.push({q:"Mērpipete",x:"V_a",val:fmt(Va,2)+" mL",u:ua,ux:"mL",rel:ua!==null?ua/Va:null,dist:"taisnstūra",src:ap!==null?(one?"10 mL pipete ":"5 mL pipete ")+"±"+sci(ap,2)+" mL"+(Va===10&&!one?", 2 reizes":""):""});
+  var sum=0, miss=[];
+  B.forEach(function(b){ if(b.rel!==null) sum+=b.rel*b.rel; else miss.push(b.q.toLowerCase()); });
+  B.forEach(function(b){ b.pc=b.rel!==null&&sum>0?b.rel*b.rel/sum*100:null; });
+  var urel=Math.sqrt(sum), U=2*wm*urel;
+  if(miss.length) info("Nav ievadīta precizitāte: "+miss.join(", ")+". Kamēr tās trūkst, ± vērtība būs mazāka nekā patiesībā.");
+  var top=B.filter(function(b){return b.pc!==null;}).sort(function(a,b){return b.pc-a.pc;})[0];
+  return {ok:true,msg:msg,m:m,c:c,V:V,Vm:Vm,Va:Va,f:f,w:w,wm:wm,s:s,n:n,B:B,urel:urel,U:U,miss:miss,top:top};
+}
+function rnd(wm,U){ if(!(U>0)) return {w:fmt(wm,2),U:null}; var dp=Math.max(0,1-Math.floor(Math.log10(U))); return {w:fmt(wm,dp),U:fmt(U,dp)}; }
+
+/* ---- līkne ---- */
+function model(R,I){
+  var K=rd(I.ksp), Kf=rd(I.kf), thr=rd(I.thr);
+  if(!(K>0)) return {ok:false,e:"Ksp jābūt pozitīvam skaitlim."};
+  var c=R.c, nAg=c*R.Vm, V0=R.Va+1, Veq=R.Vm;
+  function ag(V){ var D=(nAg-c*V)/(V0+V), r=Math.sqrt(D*D+4*K); return D>=0?(D+r)/2:2*K/(r-D); }
+  var end=null;
+  if(Kf>0&&thr>0){ var fe=0.5*1/(V0+Veq), scn=thr/(Kf*fe), agE=K/scn, E=scn+thr-agE; if(c-E>0){ var Ve=(nAg+E*V0)/(c-E); end={V:Ve,dV:Ve-Veq}; } }
+  return {ok:true,ag:ag,Veq:Veq,end:end,pEq:-Math.log10(Math.sqrt(K))};
+}
+function nice(r){ var e=Math.pow(10,Math.floor(Math.log10(r))), f=r/e; return (f<1.5?1:f<3?2:f<7?5:10)*e; }
+function draw(C){
+  var W=600,H=360,L=48,Rm=16,T=16,Bm=46, xmax=2*C.Veq, N=500, P=[];
+  for(var i=0;i<=N;i++){ var v=xmax*i/N; P.push([v,-Math.log10(C.ag(v))]); }
+  var ys=P.map(function(p){return p[1];}), y0=Math.floor(Math.min.apply(null,ys)), y1=Math.ceil(Math.max.apply(null,ys));
+  function X(v){return L+v/xmax*(W-L-Rm);} function Y(p){return T+(y1-p)/(y1-y0)*(H-T-Bm);}
+  var g="", xs=nice(xmax/5), xdp=Math.max(0,-Math.floor(Math.log10(xs)));
+  for(var x=0;x<=xmax+1e-9;x+=xs) g+='<line class="gr" x1="'+X(x)+'" x2="'+X(x)+'" y1="'+T+'" y2="'+(H-Bm)+'"/><text x="'+X(x)+'" y="'+(H-Bm+17)+'" text-anchor="middle">'+fmt(x,xdp)+'</text>';
+  var ysx=Math.max(1,nice((y1-y0)/5));
+  for(var y=Math.ceil(y0/ysx)*ysx;y<=y1+1e-9;y+=ysx) g+='<line class="gr" x1="'+L+'" x2="'+(W-Rm)+'" y1="'+Y(y)+'" y2="'+Y(y)+'"/><text x="'+(L-8)+'" y="'+(Y(y)+4)+'" text-anchor="end">'+fmt(y,0)+'</text>';
+  var d=P.map(function(p,i){return (i?"L":"M")+X(p[0]).toFixed(1)+","+Y(p[1]).toFixed(1);}).join("");
+  return '<svg class="plot" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="pAg atkarībā no KSCN tilpuma">'+g+
+    '<line class="ax" x1="'+L+'" x2="'+L+'" y1="'+T+'" y2="'+(H-Bm)+'"/><line class="ax" x1="'+L+'" x2="'+(W-Rm)+'" y1="'+(H-Bm)+'" y2="'+(H-Bm)+'"/>'+
+    '<path class="cv" d="'+d+'"/><line class="eq" x1="'+X(C.Veq)+'" x2="'+X(C.Veq)+'" y1="'+T+'" y2="'+(H-Bm)+'"/>'+
+    '<circle class="dot" cx="'+X(C.Veq)+'" cy="'+Y(C.pEq)+'" r="5"/><text class="lg" x="'+(X(C.Veq)+8)+'" y="'+(Y(C.pEq)-8)+'">ekvivalences punkts</text>'+
+    '<text x="'+((L+W-Rm)/2)+'" y="'+(H-8)+'" text-anchor="middle">pievienotais KSCN, mL</text>'+
+    '<text transform="translate(13,'+((T+H-Bm)/2)+') rotate(-90)" text-anchor="middle">pAg</text></svg>';
+}
+
+/* ---- UI ---- */
+function readUI(){ var I={}; FIELDS.forEach(function(k){I[k]=$(k).value;}); I.va=st.va; I.sim=st.sim; I.reps=st.reps.slice(); return I; }
+function writeUI(o){ FIELDS.forEach(function(k){ if(o[k]!==undefined) $(k).value=o[k]; }); st.va=o.va||"5"; st.sim=!!o.sim; st.reps=(o.reps&&o.reps.length?o.reps:[""]).slice();
+  document.querySelectorAll('input[name="va"]').forEach(function(r){r.checked=r.value===st.va;}); $("isSim").checked=st.sim; renderReps(); }
+function renderReps(){ var box=$("reps"); box.innerHTML="";
+  st.reps.forEach(function(v,i){ var row=document.createElement("div"); row.className="rep";
+    row.innerHTML='<span>'+(i+1)+'. reize</span><input type="text" inputmode="decimal" autocomplete="off" aria-label="'+(i+1)+'. titrēšanas tilpums" value="'+esc(v)+'"><span class="unit" style="width:auto">mL</span>'+(st.reps.length>1?'<button type="button" class="ghost mini">Dzēst</button>':'');
+    row.querySelector("input").addEventListener("input",function(e){st.reps[i]=e.target.value;update();});
+    var b=row.querySelector("button"); if(b) b.addEventListener("click",function(){st.reps.splice(i,1);renderReps();update();});
+    box.appendChild(row); }); }
+function save(){ try{ localStorage.setItem(KEY,JSON.stringify(readUI())); }catch(e){} }
+function load(){ try{ var s=localStorage.getItem(KEY); return s?JSON.parse(s):null; }catch(e){ return null; } }
+
+function update(){
+  document.body.classList.toggle("is-sim",st.sim);
+  var I=readUI(), R=calc(I);
+  $("msgs").innerHTML=R.msg.map(function(x){return '<div class="m '+x.l+'">'+esc(x.t)+'</div>';}).join("");
+  if(!R.ok){ $("answer").innerHTML=""; $("steps").innerHTML=""; $("budget").innerHTML='<p class="hint">Parādīsies, kad būs ievadīti mērījumi.</p>'; $("curve").innerHTML=""; $("curveTxt").innerHTML=""; $("summary").value=""; save(); return; }
+  var r=rnd(R.wm,R.U);
+  $("answer").innerHTML='<div class="answer"><div class="big">'+r.w+(r.U?' ± '+r.U:'')+' % Ag</div><p>Paraugā ir aptuveni <b>'+fmt(R.wm,1)+' %</b> sudraba. Ar ~95 % varbūtību patiesā vērtība ir starp '+(r.U?fmt(R.wm-R.U,1)+' un '+fmt(R.wm+R.U,1)+' %':'— (vajag precizitātes datus)')+'.</p></div>';
+  var nS=R.c*R.Vm/1000, mA=nS*M_AG, mT=mA*R.f;
+  $("steps").innerHTML='<p style="margin:14px 0 0;font-weight:600">Kā tas izrēķināts (vidējais tilpums '+fmt(R.Vm,3)+' mL):</p><ol class="steps">'+
+    '<li>Cik molu KSCN iztērēts?<span class="calc">n = c · V = '+sci(R.c,4)+' · '+fmt(R.Vm/1000,6)+' L = '+sci(nS,4)+' mol</span></li>'+
+    '<li>Tikpat molu sudraba bija titrētajos '+fmt(R.Va,0)+' mL (attiecība 1 : 1). Pārvērš gramos:<span class="calc">m(Ag) = '+sci(nS,4)+' · 107,87 g/mol = '+sci(mA,4)+' g</span></li>'+
+    '<li>Visā 25 mL kolbā sudraba ir '+fmt(R.f,0)+' reizes vairāk:<span class="calc">'+sci(mA,4)+' · 25 / '+fmt(R.Va,0)+' = '+sci(mT,4)+' g</span></li>'+
+    '<li>Masas daļa paraugā:<span class="calc">w = '+sci(mT,4)+' / '+fmt(R.m,4)+' · 100 = '+fmt(R.wm,2)+' %</span></li></ol>'+
+    (R.n>1?'<p class="hint">Katrai titrēšanai atsevišķi: '+R.w.map(function(x){return fmt(x,2);}).join("; ")+' %.</p>':'');
+
+  var max=Math.max.apply(null,R.B.map(function(b){return b.pc||0;}));
+  var rows=R.B.map(function(b){ return '<div class="src-row"><div>'+esc(b.q)+'</div>'+(b.rel===null?'<div class="miss">nav ievadīts</div><div class="barwrap"></div>':'<div class="v">'+sci(b.rel*100,2)+' %</div><div class="barwrap"><div class="bar" style="width:'+(max>0?b.pc/max*100:0)+'%"></div></div>')+'</div>'; }).join("");
+  var det=R.B.map(function(b){ return '<tr><td>'+esc(b.x)+'</td><td>'+esc(b.q)+'</td><td class="num">'+esc(b.val)+'</td><td>'+esc(b.src||"—")+'</td><td>'+esc(b.dist)+'</td><td class="num">'+(b.u!==null?sci(b.u,2)+' '+esc(b.ux):'—')+'</td><td class="num">'+(b.pc!==null?fmt(b.pc,1)+' %':'—')+'</td></tr>'; }).join("");
+  $("budget").innerHTML='<div style="display:flex;justify-content:space-between;color:var(--muted);font-size:.85rem"><span>Avots</span><span>Relatīvā kļūda</span></div>'+rows+
+    '<p style="margin-top:12px">Kopā: <b>±'+sci(R.urel*100,2)+' %</b> no rezultāta. To reizina ar pārklājuma koeficientu k = 2, lai iegūtu ~95 % ticamības intervālu: <b>±'+(r.U||"—")+' %</b> masas daļas.'+(R.top?' Visvairāk ietekmē: <b>'+esc(R.top.q.toLowerCase())+'</b>.':'')+'</p>'+
+    '<details><summary>Pilnā budžeta tabula atskaitei</summary><div class="tbl"><table><thead><tr><th>x</th><th>Avots</th><th>Vērtība</th><th>No kurienes</th><th>Sadalījums</th><th>u(x)</th><th>Ieguldījums</th></tr></thead><tbody>'+det+'</tbody></table></div><p class="hint">M(Ag) nenoteiktība (±0,0002 g/mol) ir niecīga un nav iekļauta.</p></details>';
+
+  var C=model(R,I);
+  if(!C.ok){ $("curve").innerHTML='<div class="m err">'+esc(C.e)+'</div>'; $("curveTxt").innerHTML=""; }
+  else{ $("curve").innerHTML=draw(C);
+    $("curveTxt").innerHTML='<p>Ekvivalences punkts ir pie <b>'+fmt(C.Veq,2)+' mL</b>, kur pAg = '+fmt(C.pEq,1)+'.'+
+      (C.end?' Indikators šķīdumu iekrāso pie '+fmt(C.end.V,3)+' mL — tikai <b>'+sci(Math.abs(C.end.dV),1)+' mL '+(C.end.dV>=0?'vēlāk':'agrāk')+'</b>. Tas ir mazāk par vienu pilienu, tāpēc indikatora kļūdu var neņemt vērā.':'')+'</p>'; }
+
+  $("summary").value=["Tēma 5 — sudraba rodanidometrija","Dati: "+(st.sim?"SIMULĒTI (nav mērījumi)":"laboratorijas mērījumi"),"",
+    "Parauga masa: "+fmt(R.m,4)+" g","c(KSCN): "+sci(R.c,4)+" mol/L","Titrētā daļa: "+fmt(R.Va,2)+" mL no 25,0 mL",
+    "KSCN tilpumi: "+R.V.map(function(v){return fmt(v,2);}).join("; ")+" mL (vidēji "+fmt(R.Vm,3)+" mL)",
+    "w(Ag) katrā titrēšanā: "+R.w.map(function(x){return fmt(x,2);}).join("; ")+" %","",
+    "REZULTĀTS: w(Ag) = ("+r.w+" ± "+(r.U||"—")+") %, k = 2",
+    "Lielākā nenoteiktība: "+(R.top?R.top.q+" ("+fmt(R.top.pc,0)+" %)":"—"),
+    R.miss.length?"Trūkst precizitātes datu: "+R.miss.join(", "):"",
+    (C.ok&&C.end)?"Indikatora kļūda (teorētiski): "+sci(C.end.dV,1)+" mL":""].join("\n");
+  save();
+}
+
+/* ---- pārbaudes ---- */
+var BASE={m:"0,0500",c:"0,0200",d:"0,0001",a5:"0,02",va:"5",reps:["4,00"]};
+function W(o){ var x=JSON.parse(JSON.stringify(BASE)); for(var k in o) x[k]=o[k]; return x; }
+function has(R,l,t){ return R.msg.some(function(m){return m.l===l&&m.t.indexOf(t)>=0;}); }
+var TESTS=[
+  {n:"Parasti dati: m = 0,0500 g, c = 0,0200, V = 4,00 mL, 5 mL",e:"86,29 %",r:function(){var R=calc(BASE);return [R.ok&&Math.abs(R.wm-86.29456)<1e-3,R.ok?fmt(R.wm,2)+" %":"kļūda"];}},
+  {n:"Tas pats, bet titrēti 10 mL",e:"2× mazāk: 43,15 %",r:function(){var R=calc(W({va:"10"}));return [R.ok&&Math.abs(R.wm-43.14728)<1e-3,R.ok?fmt(R.wm,2)+" %":"kļūda"];}},
+  {n:"Divreiz lielāka KSCN koncentrācija (V = 2,00 mL)",e:"rezultāts 2× lielāks",r:function(){var a=calc(W({reps:["2,00"]})),b=calc(W({reps:["2,00"],c:"0,0400"}));return [a.ok&&b.ok&&Math.abs(b.wm/a.wm-2)<1e-9,"× "+fmt(b.wm/a.wm,3)];}},
+  {n:"Masa = 0",e:"kļūdas paziņojums",r:function(){var R=calc(W({m:"0"}));return [!R.ok,R.ok?"aprēķināja (slikti)":"paziņojums"];}},
+  {n:"Tukša koncentrācija",e:"lūdz ievadīt",r:function(){var R=calc(W({c:""}));return [!R.ok&&has(R,"err","Ievadi"),R.ok?"aprēķināja (slikti)":"paziņojums"];}},
+  {n:"Negatīvs tilpums −1 mL",e:"kļūdas paziņojums",r:function(){var R=calc(W({reps:["-1"]}));return [!R.ok,R.ok?"aprēķināja (slikti)":"paziņojums"];}},
+  {n:"V = 2,50 mL ar 5 mL daļu",e:"atgādina par protokola < 3 mL",r:function(){var R=calc(W({reps:["2,50"]}));return [has(R,"warn","3 mL"),has(R,"warn","3 mL")?"brīdinājums":"nav"];}},
+  {n:"V = 5,00 mL ar 5 mL daļu (> 100 %)",e:"saka, ka nav iespējams",r:function(){var R=calc(W({reps:["5,00"]}));return [has(R,"err","100 %"),has(R,"err","100 %")?"paziņojums":"nav"];}}
+];
+function runTests(){ $("tests").innerHTML='<div class="tbl"><table><thead><tr><th>Ko pārbauda</th><th>Gaidām</th><th>Ieguvām</th><th></th></tr></thead><tbody>'+
+  TESTS.map(function(t){ var o; try{o=t.r();}catch(e){o=[false,"kļūda"];} return '<tr><td>'+esc(t.n)+'</td><td>'+esc(t.e)+'</td><td>'+esc(o[1])+'</td><td class="'+(o[0]?'ok':'no')+'">'+(o[0]?'✓':'✗')+'</td></tr>'; }).join("")+'</tbody></table></div>'; }
+
+FIELDS.forEach(function(k){ $(k).addEventListener("input",update); });
+document.querySelectorAll('input[name="va"]').forEach(function(r){ r.addEventListener("change",function(){st.va=r.value;update();}); });
+$("isSim").addEventListener("change",function(){ st.sim=$("isSim").checked; update(); });
+$("addRep").addEventListener("click",function(){ st.reps.push(""); renderReps(); update(); var a=$("reps").querySelectorAll("input"); a[a.length-1].focus(); });
+$("btnSim").addEventListener("click",function(){ var o={}, k; for(k in DEF) o[k]=DEF[k]; for(k in SIM) o[k]=SIM[k]; writeUI(o); update(); });
+$("btnClear").addEventListener("click",function(){ var o={}, k; for(k in DEF) o[k]=DEF[k]; writeUI(o); update(); });
+$("btnCopy").addEventListener("click",function(){ var t=$("summary"); function done(ok){$("copyMsg").textContent=ok?"Nokopēts.":"Iezīmē tekstu un kopē manuāli.";}
+  if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(t.value).then(function(){done(true);},function(){t.select();done(false);}); else {t.select();done(false);} });
+
+var init={}, k, sv=load(); for(k in DEF) init[k]=DEF[k]; if(sv) for(k in sv) init[k]=sv[k];
+writeUI(init); update(); runTests();
+})();
+</script>
+</body>
+</html>
